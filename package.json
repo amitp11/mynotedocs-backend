@@ -1,0 +1,9 @@
+{
+  "name": "mynotedocs-backend",
+  "version": "1.0.0",
+  "description": "Backend API for MyNoteDocs using Netlify Functions",
+  "scripts": {
+    "dev": "netlify dev"
+  },
+  "dependencies": {}
+}
