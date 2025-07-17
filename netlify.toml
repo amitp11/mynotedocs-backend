@@ -1,5 +1,5 @@
 [build]
-  functions = "backend/functions"
+  functions = "mynotedocs/functions"
   publish = "public"
 
 [[redirects]]
