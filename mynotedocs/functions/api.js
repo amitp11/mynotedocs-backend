@@ -1,46 +1,62 @@
-// Simple in-memory notes
 let notes = [
-  { key: "javascript", value: "A programming language primarily used on the web" },
-  { key: "springboot", value: "Java framework for building APIs" },
-  { key: "nodejs", value: "Runtime for building backend APIs in JS" },
-  { key: "netlify", value: "A platform for deploying frontends and functions" },
-  { key: "search", value: "Find notes by matching keywords" }
+  { key: "first", value: "This is my first note" },
+  { key: "second", value: "Another example note" },
+  { key: "third", value: "Node backend deployed" },
 ];
 
-exports.handler = async (event, context) => {
-  const { httpMethod, path } = event;
+exports.handler = async (event) => {
+  const path = event.path;
+  const method = event.httpMethod;
 
-  // Search notes
-  if (httpMethod === "GET" && path.endsWith("/search")) {
-    const query = (event.queryStringParameters.q || "").toLowerCase();
-    const results = notes.filter(
-      n => n.key.toLowerCase().includes(query) || n.value.toLowerCase().includes(query)
+  // GET /api/all
+  if (method === "GET" && path.endsWith("/all")) {
+    return {
+      statusCode: 200,
+      body: JSON.stringify(notes),
+      headers: { "Content-Type": "application/json" },
+    };
+  }
+
+  // GET /api/search?q=keyword
+  if (method === "GET" && path.includes("/search")) {
+    const q = event.queryStringParameters.q?.toLowerCase() || "";
+    const filtered = notes.filter(
+      (n) => n.key.toLowerCase().includes(q) || n.value.toLowerCase().includes(q)
     );
     return {
       statusCode: 200,
+      body: JSON.stringify(filtered),
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ results })
     };
   }
 
-  // Add new note
-  if (httpMethod === "POST" && path.endsWith("/add")) {
-    const body = JSON.parse(event.body || "{}");
-    if (!body.key || !body.value) {
+  // POST /api/add with JSON { key: "...", value: "..." }
+  if (method === "POST" && path.endsWith("/add")) {
+    try {
+      const body = JSON.parse(event.body || "{}");
+      if (!body.key || !body.value) {
+        return {
+          statusCode: 400,
+          body: JSON.stringify({ error: "key and value are required" }),
+        };
+      }
+      notes.push({ key: body.key, value: body.value });
+      return {
+        statusCode: 200,
+        body: JSON.stringify({ message: "Note added", notes }),
+        headers: { "Content-Type": "application/json" },
+      };
+    } catch (e) {
       return {
         statusCode: 400,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ error: "key and value required" })
+        body: JSON.stringify({ error: "Invalid JSON" }),
       };
     }
-    notes.push({ key: body.key, value: body.value });
-    return {
-      statusCode: 200,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: "Added", notes })
-    };
   }
 
-  // Fallback
-  return { statusCode: 404, body: "Not found" };
+  // default
+  return {
+    statusCode: 404,
+    body: "Not found",
+  };
 };
